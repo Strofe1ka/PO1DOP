@@ -1,0 +1,10 @@
+# Конфигурация Gitleaks для обнаружения секретов
+# Документация: https://github.com/gitleaks/gitleaks
+
+title = "Gitleaks Configuration"
+
+# Кастомное правило: AWS ключи (без allowlist для EXAMPLE)
+[[rules]]
+id = "aws-access-key-custom"
+description = "AWS Access Key ID"
+regex = '''AKIA[0-9A-Z]{16}'''

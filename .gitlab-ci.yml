@@ -1,0 +1,31 @@
+# Интеграция обнаружения секретов в GitLab CI
+# Сканирование выполняется ДО сборки. При обнаружении секретов сборка останавливается.
+
+stages:
+  - security  # Сканирование секретов — первый этап
+  - build     # Сборка — только если секреты не найдены
+
+# ========== ОБНАРУЖЕНИЕ СЕКРЕТОВ (Gitleaks) ==========
+# Запускается первым, до сборки приложения
+secret_detection:
+  stage: security
+  image:
+    name: zricethezav/gitleaks:latest
+    entrypoint: [""]
+  script:
+    - gitleaks detect --source . --config .gitleaks.toml --verbose --no-git --exit-code 1
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+  allow_failure: false  # При обнаружении секретов — пайплайн падает
+
+# ========== СБОРКА ==========
+# Выполняется только после успешного прохождения проверки секретов
+build:
+  stage: build
+  image: maven:3.9-eclipse-temurin-21-alpine
+  script:
+    - mvn clean package -B
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
